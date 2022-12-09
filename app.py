@@ -70,7 +70,7 @@ st.markdown('''
              
             **Technically speaking:** [Project Git Repo](https://github.com/rahulvaity25/stock_prediction)
             
-            **Under the hood:** [Connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers_blogpost)
+            **Under the hood:** [Connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/r_docker/blogpost/dockerize.md)
             
             aniko.maraz[at]gmail.com  -----    rahul.vaity25[at]gmail.com   -----   ruitang1996[at]gmail.com
             ''')
