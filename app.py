@@ -16,10 +16,13 @@ import json
 '''
 # Welcome to our stock prediction model.
 
-It's time to make you rich by predicting the price of the NASDAQ stocks (~) for the next 2 weeks based on the historical stock price and their public representation (in news articles, twitter and google search). 
-Find out more about the project in the bottom of the page. 
-<br>
-You are welcome!
+It's time to make you rich by predicting the price of the NASDAQ stocks (~8000) for the next 2 weeks based on the historical stock price and their public representation (in news articles, twitter and google search) and some deep learning magic. 
+Find out more about our Sata Science project in the bottom of the page. 
+'''
+
+'''
+You are welcome! :sunglasses:
+
 '''
 
 options_8000 = pd.read_csv('nasdaq_current_list_12112012.csv')
@@ -63,11 +66,11 @@ st.image(Image.open(BytesIO(image.content)), output_format='png')
 
 
 st.markdown('''
-            [Presentation](https://docs.google.com/presentation/d/19aNmhq5w_C1ThRsP_EZY7e-rMWd3qpLElBNvaPwczj8/edit?usp=sharing)
+            *What's this?!* [Presentation](https://docs.google.com/presentation/d/19aNmhq5w_C1ThRsP_EZY7e-rMWd3qpLElBNvaPwczj8/edit?usp=sharing)
              
-            [Project Git Repo](https://github.com/rahulvaity25/stock_prediction)
+            *Technically speaking:* [Project Git Repo](https://github.com/rahulvaity25/stock_prediction)
             
-            [Under the hood: connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers_blogpost)
+            *Under the hood:* [Connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers_blogpost)
             
             aniko.maraz[at]gmail.com  -----    rahul.vaity25[at]gmail.com   -----   ruitang1996[at]gmail.com
             ''')
