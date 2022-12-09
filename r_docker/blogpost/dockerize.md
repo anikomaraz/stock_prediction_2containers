@@ -6,12 +6,17 @@ Surely, I'm not the only one who loves Python for code efficiency, but prefers t
  So. Basically the flow of data is the following: The user selects a stock name from a drop-down menu (sourced from a csv) on the frontend. This data (stock name in my case) is then sent to the Python container which fetches the features data (corresponding stock price for the past 30 days (using yfinance), the sentiment + number of of tweets for the selected stock (via EODHistoricaldata.com), the sentiment + number of appearance the stock name has made in the press (also via EODH), and the number of google searches for the given stock on the given day). The Deep Learning model was trained locally. Only the weights are passed in the Python environment, and make predictions for the stock price for the next 14 days. The predictions (and the past-7-day stock prices) are fetched via the frontend to the R container, which plots the results, and sends the png image back to the frontend. 
  First I'll show you how to make things work in local, then we'll move to the cloud. :cloud:
 
+ So this is the visual plan: 
+
+![plan](plan.png)
+
+Note that the 2 containers only communicate via the frontend. 
 
 # II. Make things work in local
 ## 1. Python endpoint + frontend
-I'll start from the blissful state of having a working backend and the frontend connected in local, both written in Python. There are many tutorials how to do this, and this isn't exactly the tricky part. I found [LeWagon's guide](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) (where I did my DataScience bootcamp) guide super useful.
+I'll start from the blissful state of having a working backend and the frontend connected in local, both written in Python. There are many tutorials how to do this, and this isn't exactly the tricky part. I found [LeWagon's guide](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) guide super useful.
 
-So you have a working backend (FastAPI fetching the data and decorating code to be accessible from the other endpoints + uvicorn running listening to HTTP requests and running the code on the server). You can test if this works by running `uvicorn fastapi_:app --reload` in the terminal where `fastapi_.py` is your file running the fastapi + uvicorn code, and `app.py` is the streamlit UI. You should now be able to reach the content locally via your browser. I suggest checking out your endpoint via something like this: http://127.0.0.1:8000/docs. If you click on 'GET', then 'Try it out', and by entering the required data (in my case the name of the stock) you should see the API calls making a successful request for data: 
+So you have a working backend (FastAPI fetching the data and decorating code to be accessible from the other endpoints + uvicorn running listening to HTTP requests and running the code on the server). You can test if this works by running `uvicorn fastapi_:app --reload` in the terminal where `fastapi_.py` is your file running the fastapi + uvicorn code, and `app.py` is the streamlit frontend. You should now be able to reach the content locally via your browser. I suggest checking out your endpoint via something like this: http://127.0.0.1:8000/docs. If you click on 'GET', then 'Try it out', and by entering the required data (in my case the name of the stock) you should see the API calls making a successful request for data: 
 ![fastapi_streamlit_success](fastapi_streamlit_success.png)
 
 ## 2. The R endpoint + linking it to frontend
@@ -33,13 +38,13 @@ root %>% pr_run(port = 8079)
 This piece of code basically tells the interpreter on which port it should be running the plumber.R script. You should test your work by typing `R -f plumber.R` into the terminal. Check your local port (something like http://localhost:8079/plot) and you should see your plot! Use my ![template](plumber_local.R) if necessary.
 ![r_plot_local](r_plot_local.png)
 
-Beautiful, isn't it? I haven't found anything even close in Python to the visual magic that ggplot does to data in just 10 lines of code... :heart_eyes: Next step is to have the plot-generating R script connected with the UI and receive data (the stock name). To achieve this we'll use a post request instead of the get request, so change code to: 
+Beautiful, isn't it? I haven't found anything even close in Python to the visual magic that ggplot does to data in just 10 lines of code... :heart_eyes: Next step is to have the plot-generating R script connected with the frontend and receive data (the stock name). To achieve this we'll use a post request instead of the get request, so change code to: 
 ```
 #* @param spec 
 #* @post /plot
 #* @serializer png
 ```
-Because of the post request, our plumber end is able to send data to the UI. So now we'll go back to the streamlit file (app.py) and add these 2 lines so that the UI listens to the R-driven backend via the local port: 
+Because of the post request, our plumber end is able to send data to the frontend. So now we'll go back to the streamlit file (app.py) and add these 2 lines so that the frontend listens to the R-driven backend via the local port: 
 ```
 image = requests.get("http://localhost:8079/plot")
 st.image(Image.open(BytesIO(image.content)), output_format='png')
@@ -72,14 +77,14 @@ Make sure you are in the respective folders (where the starter file is). Port nu
 
 #
 # III. Let's move to the cloud
-Well, the backends in separate images. We have to start with the R image, as we need its GCP url to use in the Python code / image. 
+Well, the backends in separate images. We'll start with R. 
 
 
 ## 1. The R image
 
-Let's first build the r-based docker image. For this I found the [statworx guide](https://www.statworx.com/en/content-hub/blog/running-your-r-script-in-docker/) particularly helpful. Basically the task is to pull the rocker/r-base image and to build our environment on top. I suggest creating a separate folder with all the necessary R files inside, plus the docker file. The content of which is: 
+Here I found the [statworx guide](https://www.statworx.com/en/content-hub/blog/running-your-r-script-in-docker/) particularly helpful. First you have to pull an R base image (i.e. rocker/r-base) and to build our environment on top. For some reason the installation of plumber failed on my end due to lacking system dependencies that I could not resolve. So I pulled instead the rstudio/plumber which cut the Gordian Knot. So either: `docker pull rstudio/plumber` or `docker pull rocker/r-base:latest`. 
 
-First pull a base image that already contains plumber. I did this because the installation of plumber failed on my side due to system dependencies, that I could not resolve, so this is my quick-and-dirty solution. You can also try building on top of the base image, maybe you'll get lucky. So either: `docker pull rstudio/plumber` or `docker pull rocker/r-base:latest`. 
+I suggest creating a separate folder with all the necessary R files inside. Add the Dockerfile, which should contain the following:
 
 ```
 # FROM rocker/r-base:latest
@@ -104,15 +109,13 @@ docker build -t stock-prediction-r .
 docker run -it --rm stock-prediction-r
 ```
 
-
-
  <br>
 
 ## 2. Python image
-Again, I found our [lecture](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) to be a very good guide. First let's build the python image from the terminal with built-in tensorflow:  
+Again, I found our [lecture](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) to be a very good guide. First let's build the python image from the terminal with built-in tensorflow to reduce image size:  
 `docker pull tensorflow:tensorflow:2.10.0` 
 
-Then prepare the Dockerfile: 
+Make sure the requirements.txt only contains the packages that you need to run your scripts inside the image. Then prepare the Dockerfile: 
 ```
 FROM tensorflow:tensorflow:2.10.0
 
@@ -136,7 +139,7 @@ CMD uvicorn fastapi_:app --host 0.0.0.0 --port $PORT
 ```
 And build the image in the current folder from the terminal: 
 `docker build -t stock_prediction .`
-If successful, let's run it locally: `docker run -p 8080:8080 stock_prediction`
+If successful, let's run it locally: `docker run -p 8080:8080 stock_prediction`. 
 Find it on: http://0.0.0.0:8080
 
 <br>
@@ -144,7 +147,7 @@ Find it on: http://0.0.0.0:8080
 ## 3. Push R image to Google Cloud Platform
 Let's do it (again) the [LeWagon way](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source). 
 ```
-export GCP_PROJECT_ID="stock-prediction-r" # check if it works by calling echo $GCP_PROJECT_ID
+export GCP_PROJECT_ID="stock-prediction-r" 
 export DOCKER_IMAGE_NAME="stock-prediction-r"  
 export GCR_MULTI_REGION="eu.gcr.io"  
 export GCR_REGION="europe-west1"
@@ -158,29 +161,16 @@ docker run -e PORT=8079 -p 8079:8079 $GCR_MULTI_REGION/$GCP_PROJECT_ID/$DOCKER_I
 # if does, push to GCR
 docker push $GCR_MULTI_REGION/$GCP_PROJECT_ID/$DOCKER_IMAGE_NAME
 ```
-Now we have to activate the GCP Service. Go to the [Google Cloud Platform](https://console.cloud.google.com/welcome), go to Console, and select stock-prediction-r project from the drow-down menu on the top. Then Dashboard / Cloud Run / Create Service.  Click on SELECT, on the url and on latest. Select.  Set the Maximum number of instances to 1 and Ingress to 'Allow all traffic'. Under Container, Connection, Security set General Container Port to 8079 (or your version of the R container's local port). Set Request timeout to 30 and Memory to 2GB. Note that if you upload a version, you have to Select again, and click on the latest version to deploy, which will also change the container's URL. 
-Container URL: 
-eu.gcr.io/stock-prediction-r/stock-prediction-r@sha256:f1eca924fae13da8fc2fb66270604808700695430c6a5cb30d7932f9e295ad07
+Now we have to activate the GCP Service so that our image actually runs in the cloud. Go to the [Google Cloud Platform](https://console.cloud.google.com/welcome), go to Console, and select stock-prediction-r project from the drow-down menu on the top. Then Dashboard / Cloud Run / Create Service.  Click on SELECT, on the url and on latest. Select.  Set the Maximum number of instances to 1 and Ingress to 'Allow all traffic'. Under Container, Connection, Security set General Container Port to 8079 (or your version of the R container's local port). Set Request timeout to 30 and Memory to 2GB. Note that if you upload a version, you have to Select again, and click on the latest version to deploy. 
 
-GCP Cloud Run (R) URL is: https://stock-prediction-r-62x2mlrora-ew.a.run.app
-
-Make a note of the run URL (and change this definition in app.py so that data are being fetched from the GCP rather than from local): 
+Make a note of the run URL (and change this definition in app.py so that data are being fetched from the GCP rather than from local) as host of the plot endpoint: 
 ```
 image = requests.post("https://stock-prediction-r-62x2mlrora-ew.a.run.app/plot", 
                       json = {'stock_prediction': stock_prediction})
 ```
 
-https://www.howtogeek.com/devops/how-to-run-docker-containers-on-google-cloud-platform/
-
-
-
-
-
-
-
-
 ## 4. Push Python image to Google Cloud Platform
-GCP cloud run: stock-prediction-lewagon  URL: https://gcloud-5cp25n2jkq-ew.a.run.app
+There will be no surprises here, so decide on your names, and run: 
 
 ```
 export GCP_PROJECT_ID="stock-prediction-lewagon" # and make sure it works by calling echo $GCP_PROJECT_ID
@@ -206,11 +196,10 @@ Okay, so let's create the service again on [GCP](https://console.cloud.google.co
 Note the URL, and go to the frontend (app.py) and change the get request to 
 `url = 'https://gcloud-5cp25n2jkq-ew.a.run.app/predict'`
 
-Navigate to the streamlit folder and start the streamlit app in local (8501 port for me). 
-![containers_in_cloud_local_UI](containers_in_cloud_local_UI.png)
+Navigate to the streamlit folder and start the streamlit app in local (8501 port for me). You should see your app running with 2 backend containers in the cloud, and with a local UI/server. They can communicate!
 
 # IV. Frontend to the cloud (Streamlit)
-So if you see something like the image above, it means that the local frontend communicates with the 2 containers in the cloud. All we have to do now is set up a [Streamlit](https://streamlit.io/) account (if you haven't done yet), and deploy the frontend in the cloud. Register to Streamlit, create a new app, go through the installation. You'll have to pull from a git repo (the easiest way), which contains the frontend files, and point Streamlit to the app.py file. If you go to settings / General, you can ask for a custom domain. 
+All we have to do now is move the frontend to the cloud. Well, with Steamlit this is actually really easy. Set up a [Streamlit](https://streamlit.io/) account create a new app, go through the installation via your git repo (the easiest way) containing the frontend files. Then you can bake your app in the oven. Tip-of-the-day: if you go to settings / General, you can ask for a custom domain. 
 
 Aaaaand voilà: https://stockprediction.streamlit.app/
 
