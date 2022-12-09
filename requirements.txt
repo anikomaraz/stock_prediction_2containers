@@ -1,0 +1,22 @@
+# data science
+numpy
+pandas
+datetime
+# tensorflow
+
+# API
+pytrends
+requests
+
+# for data aquisition (stocks) 
+yfinance
+
+# backend
+fastapi
+uvicorn
+python-dotenv # to get api key
+
+# read image on frontend
+Pillow # for PIL
+
+
