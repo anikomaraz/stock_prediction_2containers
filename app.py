@@ -16,8 +16,8 @@ import json
 '''
 # Welcome to our stock prediction model.
 
-It's time to make you rich by predicting the price of the NASDAQ stocks (~8000) for the next 2 weeks based on the historical stock price and their public representation (in news articles, twitter and google search) and some deep learning magic. 
-Find out more about our Sata Science project in the bottom of the page. 
+It's time to make you rich. We'll do this by predicting the price of the NASDAQ stocks (~8000) for the next 2 weeks based on their historical stock price and the public representation (sentiment and count) in news articles, twitter and google search. Plus we'll flavour the mix with deep learning magic. 
+Find out more about our Data Science project in the bottom of the page. 
 '''
 
 '''
@@ -66,11 +66,11 @@ st.image(Image.open(BytesIO(image.content)), output_format='png')
 
 
 st.markdown('''
-            *What's this?!* [Presentation](https://docs.google.com/presentation/d/19aNmhq5w_C1ThRsP_EZY7e-rMWd3qpLElBNvaPwczj8/edit?usp=sharing)
+            **What's this?!** [Presentation](https://docs.google.com/presentation/d/19aNmhq5w_C1ThRsP_EZY7e-rMWd3qpLElBNvaPwczj8/edit?usp=sharing)
              
-            *Technically speaking:* [Project Git Repo](https://github.com/rahulvaity25/stock_prediction)
+            **Technically speaking:** [Project Git Repo](https://github.com/rahulvaity25/stock_prediction)
             
-            *Under the hood:* [Connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers_blogpost)
+            **Under the hood:** [Connecting two containers (Python and R) to the frontend](https://github.com/anikomaraz/stock_prediction_2containers_blogpost)
             
             aniko.maraz[at]gmail.com  -----    rahul.vaity25[at]gmail.com   -----   ruitang1996[at]gmail.com
             ''')
