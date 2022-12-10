@@ -8,18 +8,17 @@ Surely, I'm not the only one who loves Python for code efficiency, but prefers t
 
  So this is the visual plan: 
 
-![plan](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/blogpost/plan.png)
+![plan](plan.png)
 
 Note that the 2 containers only communicate via the frontend. 
 
-![plan](plan.png)
 
 # II. Make things work in local
 ## 1. Python endpoint + frontend
 I'll start from the blissful state of having a working backend and the frontend connected in local, both written in Python. There are many tutorials how to do this, and this isn't exactly the tricky part. I found [LeWagon's guide](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) guide super useful.
 
 So you have a working backend (FastAPI fetching the data and decorating code to be accessible from the other endpoints + uvicorn running listening to HTTP requests and running the code on the server). You can test if this works by running `uvicorn fastapi_:app --reload` in the terminal where `fastapi_.py` is your file running the fastapi + uvicorn code, and `app.py` is the streamlit frontend. You should now be able to reach the content locally via your browser. I suggest checking out your endpoint via something like this: http://127.0.0.1:8000/docs. If you click on 'GET', then 'Try it out', and by entering the required data (in my case the name of the stock) you should see the API calls making a successful request for data: 
-[fastapi_streamlit_success](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/blogpost/fastapi_streamlit_success.png.png)
+![fastapi_streamlit_success](fastapi_streamlit_success.png.png)
 
 ## 2. The R endpoint + linking it to frontend
 Okay, now the tricky part (or at least the part for which I found less help when googling...). First things first, create your ![R-based plot](plumber_naked.R) feeding it fake data. Make sure it runs in local, and the plot is generated without errors. Once the plot generation (on hard-coded data) works, we can start adding decorators via the Plumber package to create a web API. Take a look at the [plumber documentation](https://www.rplumber.io/). The key is to use this chunk of code in your script to mark the plot as the endpoint: 
@@ -202,6 +201,9 @@ Navigate to the streamlit folder and start the streamlit app in local (8501 port
 
 # IV. Frontend to the cloud (Streamlit)
 All we have to do now is move the frontend to the cloud. Well, with Steamlit this is actually really easy. Set up a [Streamlit](https://streamlit.io/) account create a new app, go through the installation via your git repo (the easiest way) containing the frontend files. Then you can bake your app in the oven. Tip-of-the-day: if you go to settings / General, you can ask for a custom domain. 
+
+## All is well
+So the key files will be: [api.py](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/app.py) for your frontend, then [fastapi_.py](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/fastapi_.py) to handle the Python endpoint and make the API calls + the prediction via the model, and finally your R-end files, the [plumber.R](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/r_docker/plumber.R) to make the plot and a [plumber_wrapper.R](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/r_docker/plumber.R) to call the plot. 
 
 Aaaaand voilà: https://stockprediction.streamlit.app/
 
