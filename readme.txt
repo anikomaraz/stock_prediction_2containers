@@ -1,1 +1,0 @@
-To learn more about how I deployed this project using two containers (Python and R) and linking it to the Streamlit frontend, go to [blogpost/dockerize.md](https://github.com/anikomaraz/stock_prediction_2containers/blob/master/blogpost/dockerize.md)
