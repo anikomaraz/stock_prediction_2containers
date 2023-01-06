@@ -16,12 +16,14 @@ import json
 '''
 # Welcome to our stock prediction model.
 
-It's time to make you rich. We'll do this by predicting the price of the NASDAQ stocks (~8000) for the next 2 weeks based on their historical stock price and the public representation (sentiment and count) in news articles, twitter and google search. Plus we'll flavour the mix with deep learning magic. 
+It's time to make you rich. We'll do this by predicting the price of ~8000 current NASDAQ stocks for the next 2 weeks based on their historical stock price and the public representation (sentiment and count) in news articles, twitter and google search. Plus we'll flavour the mix with deep learning magic. 
 Find out more about our Data Science project in the bottom of the page. 
 '''
 
 '''
 You are welcome! :sunglasses:
+
+*Please note: be patient with loading + if you encounter an error, please reload the page. This is because the server is put to sleep when inactive to save resources. 
 
 '''
 
