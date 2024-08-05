@@ -3,7 +3,7 @@
 I am very likely not the only one who loves Python for code efficiency, but prefers the elegance of ggplot in R when it comes to visualising (and sophisticated statistics). So I attempted to build the "best world": a Python-based frontend and backend (controling the API calls and the model) and a separate R-based backend with plotting. The 2 backends and the frontend communicate with each other in the cloud via API calls (all controlled from the frontend).  
 
  # I. Overview
- The flow of data is the following: The user selects a stock name from a drop-down menu (sourced from a csv file) on the frontend. The selection (stock name in this case) is then sent to the Python backend container which fetches the *live data* via external API calls: 
+ The flow of data is the following: The user selects a stock name from a drop-down menu (sourced from a csv file) on the frontend. The selection (stock name in this case) is then sent to the Python backend container which fetches the **live data** via external API calls: 
  - up-to-date stock price for the past 30 days (using yfinance), 
  - the sentiment + number of tweets for the stock (via EODHistoricaldata.com), 
  - the sentiment + number of appearance the stock name has made in the press (also via EODH), and 
@@ -21,14 +21,14 @@ Note that the 2 containers only communicate via the frontend.
 
 # II. Make things work in local
 ## 1. Python endpoint + frontend
-I'll start from the state of having stable backends and the frontend working and succesfully connected in local. There are many tutorials how to do this. I found [LeWagon's guide](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) guide super useful.
+I'll start from the state of having stable backends and the frontend working and succesfully connected in local. There are many tutorials how to do this. I found [LeWagon's guide](https://kitt.lewagon.com/camps/957/lectures/07-ML-Ops%2F04-Predict-in-production#source) super useful.
 
 So you have a working backend (FastAPI fetching the data and decorating code to be accessible from the other endpoints + uvicorn running listening to HTTP requests and running the code on the server). You can test if this works by running `uvicorn fastapi_:app --reload` in the terminal where `fastapi_.py` is your file running the fastapi + uvicorn code, and `app.py` is the streamlit frontend. You should now be able to reach the content locally via your browser. I suggest checking out your endpoint via something similar: http://127.0.0.1:8000/docs. If you click on 'GET', then 'Try it out', and by entering the required data (in my case the name of the stock) you should see the API calls making a successful request for data: 
 
 ![fastapi_streamlit_success](fastapi_streamlit_success.png)
 
 ## 2. The R endpoint + linking it to frontend
-Now it's time to check your ![R-based plot](plumber_naked.R) feeding it fake data locally. Make sure it runs in local, and the plot is generated without errors. Once the plot generation (on hard-coded data) works, we can start adding decorators via the Plumber package to create a web API. Take a look at the [plumber documentation](https://www.rplumber.io/). The key is to use this chunk of code in your script to mark the plot as the endpoint: 
+Now it's time to check your [R-based plot](plumber_naked.R) feeding it fake data locally. Make sure it runs in local, and the plot is generated without errors. Once the plot generation (on hard-coded data) works, we can start adding decorators via the Plumber package to create a web API. Take a look at the [plumber documentation](https://www.rplumber.io/). The key is to use this chunk of code in your script to mark the plot as the endpoint: 
 ```
 # mark plot as endpoint
 #* @param spec 
@@ -43,7 +43,7 @@ library(plumber)
 root <- pr("plumber.R")
 root %>% pr_run(port = 8079)
 ```
-This piece of code tells the interpreter on which port it should be running the plumber.R script. You should test your work by typing `R -f plumber.R` into the terminal. Check your local port (something like http://localhost:8079/plot) and you should see your plot! Use my ![template](plumber_local.R) if necessary.
+This piece of code tells the interpreter on which port it should be running the plumber.R script. You should test your work by typing `R -f plumber.R` into the terminal. Check your local port (something like http://localhost:8079/plot) and you should see your plot! Use my [template](plumber_local.R) if necessary.
 ![r_plot_local](r_plot_local.png)
 
 Beautiful, isn't it? I haven't found anything even close in Python to the visual magic that ggplot does to data in just 10 lines of code... :heart_eyes: Next step is to have the plot-generating R script connected with the frontend and receive data (the stock name). To achieve this we'll use a POST request instead of GET request, so change code to: 
